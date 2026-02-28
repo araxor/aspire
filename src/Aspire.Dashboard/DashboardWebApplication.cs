@@ -832,6 +832,44 @@ public sealed class DashboardWebApplication : IAsyncDisposable
                             configureAction(options);
                         }
                     }
+
+                    // Disallow requests without required claims
+                    if (dashboardOptions.Frontend.OpenIdConnect is
+                        {
+                            EnforceRequiredClaimsOnTokenValidated: true,
+                            RequiredClaimType: { } requiredClaimType,
+                            RequiredClaimValue: { } requiredClaimValue
+                        })
+                    {
+                        Func<Claim, bool>? claimPredicate =
+                            (
+                                string.IsNullOrWhiteSpace(requiredClaimType),
+                                string.IsNullOrWhiteSpace(requiredClaimValue)
+                            ) switch
+                            {
+                                (true, true) => claim =>
+                                    claim.Type == requiredClaimType &&
+                                    claim.Value == requiredClaimValue,
+                                (true, false) => claim =>
+                                    claim.Type == requiredClaimType,
+                                _ => null
+                            };
+
+                        if (claimPredicate is not null)
+                        {
+                            options.Events.OnTokenValidated =
+                                context =>
+                                {
+                                    if (context is not { Principal.Claims: { } claims } ||
+                                        claims.Any(claimPredicate))
+                                    {
+                                        context.Fail($"The required claim is not present");
+                                    }
+
+                                    return Task.CompletedTask;
+                                };
+                        }
+                    }
                 });
                 break;
             case FrontendAuthMode.BrowserToken:

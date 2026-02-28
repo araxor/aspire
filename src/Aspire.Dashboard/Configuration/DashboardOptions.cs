@@ -392,6 +392,13 @@ public sealed class OpenIdConnectOptions
     public string RequiredClaimValue { get; set; } = "";
 
     /// <summary>
+    /// Gets or sets a value indicating whether required claim checks are performed during token validation.
+    /// When enabled, <see cref="RequiredClaimType"/> and <see cref="RequiredClaimValue"/> are validated as part of
+    /// OpenID Connect token validation, before authorization runs.
+    /// </summary>
+    public bool EnforceRequiredClaimsOnTokenValidated { get; set; }
+
+    /// <summary>
     /// Gets or sets the optional value to configure the ClaimActions of <see cref="Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions"/>
     /// </summary>
     public List<ClaimAction> ClaimActions { get; set; } = new();
